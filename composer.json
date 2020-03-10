@@ -1,0 +1,19 @@
+{
+    "name": "sylvainjule/bouncer",
+    "description": "Restrict access of a user role to a specific page (and its children) in the panel.",
+    "type": "kirby-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sylvain Julé",
+            "email": "contact@sylvain-jule.fr"
+        }
+    ],
+    "require": {
+        "getkirby/composer-installer": "^1.1"
+    },
+    "extra": {
+        "installer-name": "bouncer"
+    },
+    "minimum-stability": "beta"
+}
