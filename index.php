@@ -1,9 +1,12 @@
 <?php
 
 Kirby::plugin('sylvainjule/bouncer', [
-    'options' => array(
+    'options' => [
         'list' => []
-    ),
+    ],
+    'sections' => [
+        'bouncernav' => []
+    ],
     'api' => [
         'routes' => function ($kirby) {
             return [
@@ -13,23 +16,33 @@ Kirby::plugin('sylvainjule/bouncer', [
                         $currentUser = $kirby->user();
                         $currentRole = $currentUser->role()->name();
                         $restriction = [];
+                        $nav         = false;
 
-                        foreach(option('sylvainjule.bouncer.list') as $role => $fieldname) {
+                        foreach(option('sylvainjule.bouncer.list') as $role => $options) {
                             if($currentRole == $role) {
-                                $pages = $currentUser->$fieldname()->toPages();
+                                $fieldname = $options['fieldname'];
+                                $pages     = $currentUser->$fieldname()->toPages();
+                                $nav       = $options['nav'] ? $options['nav'] : false;
 
                                 if($pages->count()) {
                                     foreach($pages as $page) {
-                                        $restriction[] = $page->panelUrl(true);
+                                        $restriction[] = [
+                                            'title' => $page->title()->value(),
+                                            'path'  => $page->panelUrl(true)
+                                        ];
                                     }
                                 }
                                 else {
-                                    $restriction[] = '/account';
+                                    $restriction[] = [
+                                        'title' => 'Account',
+                                        'path'  => '/account'
+                                    ];
                                 }
                             }
                         }
 
                         return array(
+                            'nav'         => $nav,
                             'restriction' => $restriction,
                         );
                     }
