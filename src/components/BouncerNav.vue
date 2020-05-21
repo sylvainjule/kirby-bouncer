@@ -1,7 +1,7 @@
 <template>
     <div v-if="showBar" class="bouncer-nav">
         <div class="bouncer-nav-inner">
-            <strong>Baculer vers :</strong>
+            <strong>Basculer vers :</strong>
             <div v-for="page in pages" class="page">
                 <k-link :to="page.path">{{ page.title }}</k-link>
             </div>
