@@ -23,10 +23,10 @@ panel.plugin('sylvainjule/bouncer', {
         function checkRedirect(to, next, firstLoad = false) {
             var user = Vue.$data.user;
 
-            if(user && user.restriction) {
+            if(user && Array.isArray(user.restriction)) {
                 if(!isAllowed(to, user)) {
-                    if(next) { next(user.restriction.path); }
-                    else     { Vue.$router.push(user.restriction.path); }
+                    if(next) { next(user.restriction[0]); }
+                    else     { Vue.$router.push(user.restriction[0]); }
                 }
                 else {
                     if(next) {
@@ -50,10 +50,17 @@ panel.plugin('sylvainjule/bouncer', {
                 });
         }
         function isAllowed(to, user) {
-            return to.name == 'Account' ||
-                   to.path == '/logout' ||
-                   to.path == '/login'  ||
-                   to.path.slice(0, user.restriction.path.length) == user.restriction.path;
+            let allowed = to.name == 'Account' || to.path == '/account' || to.path == '/logout' || to.path == '/login';
+
+            if(!allowed && Array.isArray(user.restriction)) {
+                user.restriction.forEach(path => {
+                    if(to.path.slice(0, path.length) == path) {
+                        allowed = true;
+                    }
+                })
+            }
+
+            return allowed;
         }
     },
 });

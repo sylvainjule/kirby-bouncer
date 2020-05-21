@@ -12,19 +12,19 @@ Kirby::plugin('sylvainjule/bouncer', [
                     'action'  => function() use ($kirby) {
                         $currentUser = $kirby->user();
                         $currentRole = $currentUser->role()->name();
-                        $restriction = false;
+                        $restriction = [];
 
                         foreach(option('sylvainjule.bouncer.list') as $role => $fieldname) {
                             if($currentRole == $role) {
-                                if($p = $currentUser->$fieldname()->toPage()) {
-                                    $restriction = array(
-                                        'path' => $p->panelUrl(true),
-                                    );
+                                $pages = $currentUser->$fieldname()->toPages();
+
+                                if($pages->count()) {
+                                    foreach($pages as $page) {
+                                        $restriction[] = $page->panelUrl(true);
+                                    }
                                 }
                                 else {
-                                    $restriction = array(
-                                        'path' => '/users/'. $currentUser->id(),
-                                    );
+                                    $restriction[] = '/account';
                                 }
                             }
                         }
