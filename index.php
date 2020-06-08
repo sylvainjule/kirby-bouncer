@@ -22,7 +22,7 @@ Kirby::plugin('sylvainjule/bouncer', [
                             if($currentRole == $role) {
                                 $fieldname = $options['fieldname'];
                                 $pages     = $currentUser->$fieldname()->toPages();
-                                $nav       = $options['nav'] ? $options['nav'] : false;
+                                $nav       = array_key_exists('nav', $options) && $options['nav'] ? $options['nav'] : false;
 
                                 if($pages->count()) {
                                     foreach($pages as $page) {
