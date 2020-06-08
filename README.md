@@ -61,7 +61,51 @@ fields:
 ```php
 return [
     'sylvainjule.bouncer.list' => [
-        'test' => 'canaccess'
+        'test' => [
+            'fieldname' => 'canaccess'
+        ]
+    ]
+];
+```
+
+### 2.1 Optional page switcher
+
+(beta)
+
+Since 1.0.1 a given user can access different pages. You can remove the `multiple: false` option from the blueprint:
+
+```yaml
+# User role blueprint
+title: Test
+
+fields:
+  canaccess:
+    label: 'The user will only be able to access:'
+    type: pages
+    options: query
+    query: site.pages # or any query that suits your needs
+```
+
+Add a `bouncernav` section in every page you'd like to display the language switcher on:
+
+```php
+// Anywhere in any blueprint
+
+(...)
+sections:
+  bouncernav:
+    type: bouncernav
+```
+
+Then state in your `config.php` that you want to display the page switcher for a given user role:
+
+```php
+return [
+    'sylvainjule.bouncer.list' => [
+        'test' => [
+            'fieldname' => 'canaccess',
+            'nav' => true
+        ]
     ]
 ];
 ```
