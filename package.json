@@ -7,12 +7,13 @@
     "recognizeSelfClosing": true
   },
   "devDependencies": {
-    "@vue/component-compiler-utils": "^3.1.2",
+    "@vue/component-compiler-utils": "^3.2.0",
     "cssnano": "^4.1.10",
-    "vue-template-compiler": "^2.6.11"
+    "sass": "^1.30.0",
+    "vue-template-compiler": "^2.6.12"
   },
   "dependencies": {
-    "vue": "^2.6.11",
+    "vue": "^2.6.12",
     "vue-hot-reload-api": "^2.3.4"
   }
 }
