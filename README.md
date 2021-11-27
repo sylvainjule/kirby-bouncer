@@ -8,7 +8,7 @@ Restrict access of a user role to a specific page (and its children) in the pane
 
 ## Overview
 
-> This plugin is completely free and published under the MIT license. However, if you are using it in a commercial project and want to help me keep up with maintenance, please consider [making a donation of your choice](https://www.paypal.me/sylvainjl) or purchasing your license(s) through [my affiliate link](https://a.paddle.com/v2/click/1129/36369?link=1170).
+> This plugin is completely free and published under the MIT license. However, if you are using it in a commercial project and want to help me keep up with maintenance, please consider [making a donation of your choice](https://www.paypal.me/sylvainjule) or purchasing your license(s) through [my affiliate link](https://a.paddle.com/v2/click/1129/36369?link=1170).
 
 - [1. Installation](#1-installation)
 - [2. Setup](#2-setup)
@@ -40,6 +40,7 @@ permissions:
     panel: true
     site: true
     settings: false
+    languages: false
     users: false
   # ...
   user:
@@ -86,7 +87,7 @@ fields:
     query: site.pages # or any query that suits your needs
 ```
 
-Add a `bouncernav` section in every page you'd like to display the language switcher on:
+Add a `bouncernav` section in every page you'd like to display the page switcher on:
 
 ```php
 // Anywhere in any blueprint
@@ -114,8 +115,7 @@ return [
 
 ## 3. Disclaimer
 
-- I needed this functionnality for a website and turned it into a plugin. I hope it can prove helpful, but do not intend to extend it or support more refined restriction scenarios with this plugin.
-- The plugin uses Vue router's `beforeResolve` guard, currently not used by the panel (Kirby 3.3.5). This may change in the future, please look for any change in that direction before updating your websites, and please let me know if you spot an interfering update.
+I needed this functionnality for a website and turned it into a plugin. I hope it can prove helpful, but do not intend to extend it or support more refined restriction scenarios with this plugin.
 
 <br/>
 
