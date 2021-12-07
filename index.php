@@ -1,13 +1,36 @@
 <?php
 
+require_once __DIR__ . '/lib/bouncer.php';
+
 Kirby::plugin('sylvainjule/bouncer', [
-    'options' => [
-        'list' => []
+    'options'  => [
+        'list'       => []
     ],
     'sections' => [
         'bouncernav' => []
     ],
-    'api' => [
+    'hooks'    => [
+        'panel.route:before' => function($route, $path, $method) {
+            $user  = kirby()->user();
+            if(!$user) return;
+
+            $currentRole = $user->role()->name();
+
+            foreach(option('sylvainjule.bouncer.list') as $role => $options) {
+                if($currentRole == $role) {
+                    $fieldname    = $options['fieldname'];
+                    $allowed      = Bouncer::getAllowedPages($user, $fieldname, true);
+                    $allowedPaths = A::pluck($allowed, 'path');
+                    $currentPath  = '/'. $path;
+
+                    if(!in_array($currentPath, $allowedPaths)) {
+                        Panel::go($allowedPaths[0]);
+                    }
+                }
+            }
+        }
+    ],
+    'api'      => [
         'routes' => function ($kirby) {
             return [
                 [
@@ -15,38 +38,21 @@ Kirby::plugin('sylvainjule/bouncer', [
                     'action'  => function() use ($kirby) {
                         $currentUser = $kirby->user();
                         $currentRole = $currentUser->role()->name();
-                        $restriction = [];
+                        $allowed     = [];
                         $nav         = false;
 
                         foreach(option('sylvainjule.bouncer.list') as $role => $options) {
                             if($currentRole == $role) {
                                 $fieldname = $options['fieldname'];
-                                // can't use ->toPages() here because it won't include drafts
-                                $pages     = $currentUser->$fieldname()->yaml();
-                                $pages     = array_map(function($p) use($kirby) { return $kirby->page($p); }, $pages);
-                                $pages     = new Pages($pages);
-                                $nav       = array_key_exists('nav', $options) && $options['nav'] ? $options['nav'] : false;
 
-                                if($pages->count()) {
-                                    foreach($pages as $page) {
-                                        $restriction[] = [
-                                            'title' => $page->title()->value(),
-                                            'path'  => $page->panelUrl(true)
-                                        ];
-                                    }
-                                }
-                                else {
-                                    $restriction[] = [
-                                        'title' => 'Account',
-                                        'path'  => '/account'
-                                    ];
-                                }
+                                $allowed   = Bouncer::getAllowedPages($currentUser, $fieldname);
+                                $nav       = array_key_exists('nav', $options) && $options['nav'] ? $options['nav'] : false;
                             }
                         }
 
                         return array(
-                            'nav'         => $nav,
-                            'restriction' => $restriction,
+                            'nav'     => $nav,
+                            'allowed' => $allowed,
                         );
                     }
                 ]

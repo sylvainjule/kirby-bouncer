@@ -1,5 +1,5 @@
 <template>
-    <div v-if="showBar" class="bouncer-nav">
+    <div v-if="show" class="bouncer-nav">
         <div class="bouncer-nav-inner">
             <strong>Basculer vers :</strong>
             <div v-for="page in pages" class="page">
@@ -17,15 +17,25 @@ export default {
         }
     },
     created() {
-        this.$api.get('current-user').then(user => { this.user = user; });
+        this.$api.get('current-user').then(user => {
+            this.user = user;
+            if(this.showBar(user)) {
+                this.$root.$el.classList.add('bouncer-padding-top')
+            }
+        });
     },
     computed: {
-        showBar() {
-            return this.user && this.user.nav && Array.isArray(this.user.restriction) && this.user.restriction.length > 1
+        show() {
+            return this.showBar(this.user)
         },
         pages() {
-            if(!this.showBar) return []
-            return this.user.restriction.filter(el => { return el.path != this.$router.currentRoute.path})
+            if(!this.show) return []
+            return this.user.allowed.filter(el => { return el.path != this.parent})
+        }
+    },
+    methods: {
+        showBar(user) {
+            return user && user.nav && Array.isArray(user.allowed) && user.allowed.length > 1
         }
     }
 };
@@ -51,6 +61,9 @@ export default {
         padding: 0 3rem;
         margin: 0 auto;
         max-width: 100rem;
+        strong {
+            margin-right: 8px;
+        }
         .page {
             display: inline-block;
         }
