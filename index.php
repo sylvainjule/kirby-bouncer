@@ -14,6 +14,12 @@ Kirby::plugin('sylvainjule/bouncer', [
             $user  = kirby()->user();
             if(!$user) return;
 
+            if (str_starts_with($path, "dialogs")
+                || str_starts_with($path, "dropdowns")
+                || str_starts_with($path, "search")) {
+                return;
+            }
+
             $currentRole = $user->role()->name();
 
             foreach(option('sylvainjule.bouncer.list') as $role => $options) {
