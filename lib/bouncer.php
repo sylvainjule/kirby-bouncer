@@ -2,7 +2,7 @@
 
 class Bouncer {
 
-    private static function getChildren($allowed, Page $page) {
+    private static function getChildren($allowed, Kirby\Cms\Page $page) {
         if (!$page->hasChildren()) {
             return [];
         }
