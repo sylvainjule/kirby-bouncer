@@ -2,27 +2,6 @@
 
 class Bouncer {
 
-    private static function getChildren($allowed, Kirby\Cms\Page $page) {
-        if (!$page->hasChildren()) {
-            return [];
-        }
-
-        $allowed = [];
-        $pages = $page->childrenAndDrafts();
-        foreach($pages as $p) {
-            $allowed[] = [
-                'title' => $p->title()->value(),
-                'path'  => $p->panelUrl(true)
-            ];
-
-
-            $children = Bouncer::getChildren($allowed, $p);
-            $allowed = array_merge($allowed, $children);
-        }
-
-        return $allowed;
-    }
-
     public static function getAllowedPages($user, $fieldname, $extra = false) {
         $kirby   = kirby();
         $allowed = [];
@@ -37,8 +16,8 @@ class Bouncer {
                     'path'  => $page->panelUrl(true)
                 ];
 
-                $children = $extra ? Bouncer::getChildren($allowed, $page) : [];
-                $allowed = array_merge($allowed, $children);
+                $children = $extra ? static::getChildren($page) : [];
+                $allowed  = array_merge($allowed, $children);
             }
         }
 
@@ -51,6 +30,25 @@ class Bouncer {
                 'title' => 'Logout',
                 'path'  => '/logout'
             ];
+        }
+
+        return $allowed;
+    }
+
+    private static function getChildren(Kirby\Cms\Page $page) {
+        if (!($page->hasChildren() || $page->hasDrafts())) { return []; }
+
+        $allowed = [];
+        $pages   = $page->childrenAndDrafts();
+
+        foreach($pages as $p) {
+            $allowed[] = [
+                'title' => $p->title()->value(),
+                'path'  => $p->panelUrl(true)
+            ];
+
+            $children = static::getChildren($p);
+            $allowed  = array_merge($allowed, $children);
         }
 
         return $allowed;
