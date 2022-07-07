@@ -12,7 +12,7 @@ Kirby::plugin('sylvainjule/bouncer', [
     'hooks'    => [
         'panel.route:before' => function($route, $path, $method) {
             $user  = kirby()->user();
-            if(!$user) return;
+            if(!$user || !$path) return;
 
             if (str_starts_with($path, "dialogs")
                 || str_starts_with($path, "dropdowns")
