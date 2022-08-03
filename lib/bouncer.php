@@ -13,7 +13,7 @@ class Bouncer {
             foreach($pages as $page) {
                 $allowed[] = [
                     'title' => $page->title()->value(),
-                    'path'  => $page->panelUrl(true)
+                    'path'  => $page->panel()->url(true)
                 ];
 
                 $children = $extra ? static::getChildren($page) : [];
@@ -44,7 +44,7 @@ class Bouncer {
         foreach($pages as $p) {
             $allowed[] = [
                 'title' => $p->title()->value(),
-                'path'  => $p->panelUrl(true)
+                'path'  => $p->panel()->url(true)
             ];
 
             $children = static::getChildren($p);
