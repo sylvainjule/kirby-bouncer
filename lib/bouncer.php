@@ -26,6 +26,11 @@ class Bouncer {
                 'title' => 'Account',
                 'path'  => '/account'
             ];
+            
+            $allowed[] = [
+                'title' => 'Login',
+                'path'  => '/login'
+            ];
             $allowed[] = [
                 'title' => 'Logout',
                 'path'  => '/logout'
