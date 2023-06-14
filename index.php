@@ -2,6 +2,12 @@
 
 require_once __DIR__ . '/lib/bouncer.php';
 
+if (!function_exists('str_starts_with')) {
+    function str_starts_with($haystack, $needle) {
+        return (string)$needle !== '' && strncmp($haystack, $needle, strlen($needle)) === 0;
+    }
+}
+
 Kirby::plugin('sylvainjule/bouncer', [
     'options'  => [
         'list'       => []
