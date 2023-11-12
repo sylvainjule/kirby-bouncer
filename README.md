@@ -62,8 +62,8 @@ fields:
 ```php
 return [
     'sylvainjule.bouncer.list' => [
-        'test' => [
-            'fieldname' => 'canaccess'
+        'test' => [ // match the filename without extension of the user blueprint
+            'fieldname' => 'canaccess' 
         ]
     ]
 ];
