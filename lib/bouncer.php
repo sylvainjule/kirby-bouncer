@@ -34,6 +34,10 @@ class Bouncer {
                 'title' => 'Logout',
                 'path'  => '/logout'
             ];
+            $allowed[] = [
+                'title' => 'Reset password',
+                'path'  => '/reset-password'
+            ];
         }
 
         return $allowed;
