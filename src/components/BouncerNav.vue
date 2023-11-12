@@ -80,6 +80,9 @@ export default {
                 border-color: black;
             }
         }
+        @media screen and (min-width: 90em) {
+            padding: 0 6rem;
+        }
     }
 }
 </style>
