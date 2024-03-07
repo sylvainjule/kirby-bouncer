@@ -1,9 +1,11 @@
 <template>
     <div v-if="show" class="bouncer-nav">
-        <div class="bouncer-nav-inner">
-            <strong>Basculer vers :</strong>
-            <div v-for="page in pages" class="page">
-                <k-link :to="page.path">{{ page.title }}</k-link>
+        <div class="bouncer-nav-container">
+            <div class="bouncer-nav-inner">
+                <strong>Basculer vers :</strong>
+                <div v-for="page in pages" class="page">
+                    <k-link :to="page.path">{{ page.title }}</k-link>
+                </div>
             </div>
         </div>
     </div>
@@ -20,7 +22,16 @@ export default {
         this.$api.get('current-user').then(user => {
             this.user = user;
             if(this.showBar(user)) {
-                this.$root.$el.classList.add('bouncer-padding-top')
+                this.$nextTick(() => {
+                    let _panel   = this.$root.$el
+                    let _main    = _panel.querySelector('.k-panel-main')
+                    let _bar     = _panel.querySelector('.k-sections .bouncer-nav-container')
+                    let _prevBar = document.querySelector('.k-panel > .bouncer-nav-container')
+
+                    _panel.classList.add('bouncer-padding-top')
+                    _prevBar && _prevBar.remove()
+                    _panel.insertBefore(_bar, _main)
+                })
             }
         });
     },
@@ -42,47 +53,5 @@ export default {
 </script>
 
 <style lang="scss">
-.bouncer-padding-top .k-page-view {
-    padding-top: 40px;
-}
-.bouncer-nav {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    left: 0;
-    height: 40px;
-    background: lighten(#81a3be, 15%);
-    display: flex;
-    align-items: center;
-    font-size: 0.75rem;
-    padding-bottom: 0;
-    &-inner {
-        width: 100%;
-        padding: 0 3rem;
-        margin: 0 auto;
-        max-width: 100rem;
-        strong {
-            margin-right: 8px;
-        }
-        .page {
-            display: inline-block;
-        }
-        .page + .page {
-            &:before {
-                content: '–';
-                margin-left: 8px;
-                margin-right: 8px;
-            }
-        }
-        a {
-            border-bottom: 1px solid rgba(0, 0, 0, .15);
-            &:hover {
-                border-color: black;
-            }
-        }
-        @media screen and (min-width: 90em) {
-            padding: 0 6rem;
-        }
-    }
-}
+  @import '../assets/css/styles.scss';
 </style>
