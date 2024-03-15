@@ -38,14 +38,15 @@ class Bouncer {
                 'title' => 'Reset password',
                 'path'  => '/reset-password'
             ];
+            $allowed = array_merge($allowed, $kirby->option('sylvainjule.bouncer.extra-allowed', []));
         }
 
         return $allowed;
     }
-    
+
     private static function getChildrenFiles(Kirby\Cms\Page $page) {
         if (!($page->hasFiles())) { return []; }
-        
+
         $allowed = [];
         $files   = $page->files();
         foreach($files as $f) {
@@ -63,7 +64,7 @@ class Bouncer {
 
         $allowed = [];
         $pages   = $page->childrenAndDrafts();
-        
+
         if($page->hasFiles()){
             $files = static::getChildrenFiles($page);
             $allowed  = array_merge($allowed, $files);
