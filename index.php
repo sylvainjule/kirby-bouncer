@@ -36,7 +36,8 @@ Kirby::plugin('sylvainjule/bouncer', [
                     $currentPath  = '/'. $path;
 
                     if(!in_array($currentPath, $allowedPaths)) {
-                        Panel::go($allowedPaths[0]);
+                        $fallback = option('sylvainjule.bouncer.fallback', $allowedPaths[0]);
+                        Panel::go($fallback);
                     }
                 }
             }
