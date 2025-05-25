@@ -2,7 +2,7 @@
     <div v-if="show" class="bouncer-nav">
         <div class="bouncer-nav-container">
             <div class="bouncer-nav-inner">
-                <strong>Basculer vers :</strong>
+                <strong>{{ $t('sylvainjule.bouncer.switch') }}:</strong>
                 <div v-for="page in pages" class="page">
                     <k-link :to="page.path">{{ page.title }}</k-link>
                 </div>
