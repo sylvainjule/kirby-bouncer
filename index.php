@@ -25,6 +25,13 @@ Kirby::plugin('sylvainjule/bouncer', [
                         }
                     ]
                 ],
+                'dialogs' => [
+                    'changes' => [
+                        'load'    => function() {
+                            return Bouncer::panelChanges();
+                        },
+                    ],
+                ]
             ];
         },
     ],

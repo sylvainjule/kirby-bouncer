@@ -99,6 +99,35 @@ class Bouncer {
         }
     }
 
+    public static function panelChanges() {
+        $user      = kirby()->user();
+        $role      = $user->role()->name();
+        $rolesList = option('sylvainjule.bouncer.list');
+        $changes   = (new Kirby\Panel\ChangesDialog())->load();
+
+        if(array_key_exists($role, $rolesList) && array_key_exists('fieldname', $rolesList[$role])) {
+            $allowed = static::getAllowedPages(kirby()->user(), $rolesList[$role]['fieldname']);
+
+            $pages = $changes['props']['pages'];
+            $pages = array_filter($pages, function($p) use($allowed) {
+                return in_array($p['link'], array_column($allowed, 'path'));
+            });
+            $changes['props']['pages'] = array_values($pages);
+
+
+            $files = $changes['props']['files'];
+            $files = array_filter($files, function($f) use($allowed) {
+                return in_array(explode('/files/', $f['link'])[0], array_column($allowed, 'path'));
+            });
+            $changes['props']['files'] = array_values($files);
+
+
+            $changes['props']['users'] = [];
+        }
+        
+        return $changes;
+    }
+
     private static function getChildrenFiles(Kirby\Cms\Page $page) {
         if (!($page->hasFiles())) { return []; }
         
