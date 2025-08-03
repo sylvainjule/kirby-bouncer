@@ -27,7 +27,7 @@ Alternatively, you can install it with composer: ```composer require sylvainjule
 
 ## 2. Setup
 
-The intent of this plugin is to limit a user's ability to edit only their Account page + a page (and its children) selected in a *Pages field*.
+The intent of this plugin is to limit a user's ability to edit only their Account page + pages (and their children) selected in a *Pages field*.
 
 - First, create a new user role (for example, `/site/blueprints/users/test.yml`)
 - Set their permissions, and add a `pages` field:
