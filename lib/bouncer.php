@@ -38,6 +38,8 @@ class Bouncer {
                 'title' => 'Reset password',
                 'path'  => '/reset-password'
             ];
+
+            $allowed = array_merge($allowed, $kirby->option('sylvainjule.bouncer.list.'. $user->role() .'.extra', []));
         }
 
         return $allowed;
