@@ -114,13 +114,11 @@ class Bouncer {
             });
             $changes['props']['pages'] = array_values($pages);
 
-
             $files = $changes['props']['files'];
             $files = array_filter($files, function($f) use($allowed) {
                 return in_array(explode('/files/', $f['link'])[0], array_column($allowed, 'path'));
             });
             $changes['props']['files'] = array_values($files);
-
 
             $changes['props']['users'] = [];
         }

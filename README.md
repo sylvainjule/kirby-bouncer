@@ -132,7 +132,7 @@ return [
 ];
 ```
 
-### 2.3 Specify fallback path
+### 2.3 Fallback path
 
 In your `site/config/config.php`, you can configure for each `role` which path to fallback to when the user tries to access a forbidden page. 
 It is optional: if left empty, the first accessible page from the *Pages field* associated to the user's role (`canaccess`, in our example) will be used.
