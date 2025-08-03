@@ -8,11 +8,14 @@
     }
 }
 
-.k-panel[data-menu="false"] {
+@media (max-width: 60rem) {
+.k-panel {
     .bouncer-nav-container {
         margin-inline-start: 0;
     }
 }
+}
+
 .bouncer-nav {
     &-container {
         position: sticky;

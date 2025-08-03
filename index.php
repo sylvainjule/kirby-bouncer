@@ -70,5 +70,16 @@ Kirby::plugin('sylvainjule/bouncer', [
                 ]
             ];
         }
+    ],
+    'translations' => [
+        'en' => [
+            'sylvainjule.bouncer.switch' => 'Switch to',
+        ],
+        'de' => [
+            'sylvainjule.bouncer.switch' => 'Wechseln zu',
+        ],
+        'fr' => [
+            'sylvainjule.bouncer.switch' => 'Basculer vers',
+        ],
     ]
 ]);
