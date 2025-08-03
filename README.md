@@ -52,7 +52,6 @@ fields:
   canaccess:
     label: 'The user will only be able to access:'
     type: pages
-    multiple: false
     options: query
     query: site.pages # or any query that suits your needs
 ```
