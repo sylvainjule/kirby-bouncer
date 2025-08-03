@@ -36,8 +36,15 @@ Kirby::plugin('sylvainjule/bouncer', [
                     $currentPath  = '/'. $path;
 
                     if(!in_array($currentPath, $allowedPaths)) {
-                        $fallback = option('sylvainjule.bouncer.list.'. $role .'.fallback', $allowedPaths[0]);
-                        Panel::go($fallback);
+                        $systemPaths = ['/site/tree'];
+                        $systemMatch = array_filter($systemPaths, function($systemPath) use($currentPath) {
+                            return str_starts_with($currentPath, $systemPath);
+                        });
+
+                        if(!count($systemMatch)) {
+                            $fallback = option('sylvainjule.bouncer.list.'. $role .'.fallback', $allowedPaths[0]);
+                            Panel::go($fallback);
+                        }
                     }
                 }
             }

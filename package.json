@@ -1,7 +1,7 @@
 {
-  "name": "kirby-embed",
+  "name": "kirby-bouncer",
   "version": "0.0.1",
-  "description": "Embed field for Kirby 3",
+  "description": "Bouncer plugin for Kirby",
   "main": "index.js",
   "author": "Sylvain Julé",
   "license": "MIT",

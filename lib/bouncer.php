@@ -45,6 +45,26 @@ class Bouncer {
         return $allowed;
     }
     
+    public static function isMovableTo($page, $parent) {
+        try {
+            $movable   = true;
+            $user      = kirby()->user();
+            $role      = $user->role()->name();
+            $rolesList = option('sylvainjule.bouncer.list');
+
+            if(array_key_exists($role, $rolesList) && array_key_exists('fieldname', $rolesList[$role])) {
+                $allowed = static::getAllowedPages(kirby()->user(), $rolesList[$role]['fieldname']);
+                $movable = in_array($parent->panel()->url(true), array_column($allowed, 'path'));
+            }
+
+            Kirby\Cms\PageRules::move($page, $parent);
+            return $movable;
+        } 
+        catch (Throwable) {
+            return false;
+        }
+    }
+    
     private static function getChildrenFiles(Kirby\Cms\Page $page) {
         if (!($page->hasFiles())) { return []; }
         

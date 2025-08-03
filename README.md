@@ -147,6 +147,23 @@ return [
 ];
 ```
 
+### 2.4 Movable pages
+
+By default, a restricted user will be able to move pages even to pages it cannot access. 
+Kirby calls a `isMovableTo` method to check which pages to disable / enable in the *Move page* dialog, which is declared in the `Page` class and cannot be overwritten globally from the plugin.
+However if you want to apply the bouncer's restrictions to this page tree and disable restricted pages, the plugin provides a replacement method.
+
+You have to declare a custom [Page model](https://getkirby.com/docs/guide/templates/page-models#overriding-the-page-class) for each page in order to apply it:
+
+```php
+class ExamplePage extends Page {
+    public function isMovableTo(Kirby\Cms\Page|Kirby\Cms\Site $parent): bool {
+        return Bouncer::isMovableTo($this, $parent);
+    }
+};
+```
+
+
 <br/>
 
 ## 3. Disclaimer
