@@ -15,6 +15,19 @@ Kirby::plugin('sylvainjule/bouncer', [
     'sections' => [
         'bouncernav' => []
     ],
+    'areas' => [
+        'site' => function ($kirby) {
+            return [
+                'searches' => [
+                    'pages' => [
+                        'query' => function (string|null $query, int $limit, int $page) use ($kirby) {
+                            return Bouncer::panelSearch($kirby, $query, $limit, $page);
+                        }
+                    ]
+                ],
+            ];
+        },
+    ],
     'hooks'    => [
         'panel.route:before' => function($route, $path, $method) {
             $user  = kirby()->user();

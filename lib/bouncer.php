@@ -53,7 +53,7 @@ class Bouncer {
             $rolesList = option('sylvainjule.bouncer.list');
 
             if(array_key_exists($role, $rolesList) && array_key_exists('fieldname', $rolesList[$role])) {
-                $allowed = static::getAllowedPages(kirby()->user(), $rolesList[$role]['fieldname']);
+                $allowed = static::getAllowedPages($user, $rolesList[$role]['fieldname']);
                 $movable = in_array($parent->panel()->url(true), array_column($allowed, 'path'));
             }
 
@@ -64,7 +64,41 @@ class Bouncer {
             return false;
         }
     }
-    
+
+    public static function panelSearch($kirby, $query, $limit, $page) {
+        $user      = $kirby->user();
+        $role      = $user->role()->name();
+        $rolesList = option('sylvainjule.bouncer.list');
+
+        if(array_key_exists($role, $rolesList) && array_key_exists('fieldname', $rolesList[$role])) {
+            $allowed = static::getAllowedPages(kirby()->user(), $rolesList[$role]['fieldname']);
+
+            $pages = $kirby->site()->index(true);
+            $pages = $pages->filter(function($p) use($allowed) {
+                return in_array($p->panel()->url(true), array_column($allowed, 'path'));
+            });   
+            $pages = $pages->search($query)->filter('isListable', true);
+
+            if ($limit !== null) {
+                $pages = $pages->paginate($limit, $page);
+            }
+
+            return [
+                'results' => $pages->values(fn ($page) => [
+                    'image' => $page->panel()->image(),
+                    'text' => Escape::html($page->title()->value()),
+                    'link' => $page->panel()->url(true),
+                    'info' => Escape::html($page->id()),
+                    'uuid' => $page->uuid()?->toString(),
+                ]),
+                'pagination' => $pages->pagination()?->toArray()
+            ];
+        }
+        else {
+            return $kirby->core()->area('site')['searches']['pages']['query']($query, $limit, $page);
+        }
+    }
+
     private static function getChildrenFiles(Kirby\Cms\Page $page) {
         if (!($page->hasFiles())) { return []; }
         
