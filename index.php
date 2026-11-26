@@ -23,6 +23,11 @@ Kirby::plugin('sylvainjule/bouncer', [
                         'query' => function (string|null $query, int $limit, int $page) use ($kirby) {
                             return Bouncer::panelSearch($kirby, $query, $limit, $page);
                         }
+                    ],
+                    'files' => [
+                        'query' => function (string|null $query, int $limit, int $page) use ($kirby) {
+                            return Bouncer::panelSearch($kirby, $query, $limit, $page, 'files');
+                        }
                     ]
                 ],
                 'dialogs' => [

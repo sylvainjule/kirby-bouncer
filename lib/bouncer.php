@@ -65,38 +65,66 @@ class Bouncer {
         }
     }
 
-    public static function panelSearch($kirby, $query, $limit, $page) {
-        $user      = $kirby->user();
+    public static function panelSearch($kirby, $query, $limit, $page, $type = 'pages') {
+        $user = $kirby->user();
+
+        if(!$user) {
+            return ['results' => [], 'pagination' => null];
+        }
+
         $role      = $user->role()->name();
-        $rolesList = option('sylvainjule.bouncer.list');
+        $rolesList = $kirby->option('sylvainjule.bouncer.list', []);
 
-        if(array_key_exists($role, $rolesList) && array_key_exists('fieldname', $rolesList[$role])) {
-            $allowed = static::getAllowedPages(kirby()->user(), $rolesList[$role]['fieldname']);
-
-            $pages = $kirby->site()->index(true);
-            $pages = $pages->filter(function($p) use($allowed) {
-                return in_array($p->panel()->url(true), array_column($allowed, 'path'));
-            });   
-            $pages = $pages->search($query)->filter('isListable', true);
-
-            if ($limit !== null) {
-                $pages = $pages->paginate($limit, $page);
-            }
-
-            return [
-                'results' => $pages->values(fn ($page) => [
-                    'image' => $page->panel()->image(),
-                    'text' => Escape::html($page->title()->value()),
-                    'link' => $page->panel()->url(true),
-                    'info' => Escape::html($page->id()),
-                    'uuid' => $page->uuid()?->toString(),
-                ]),
-                'pagination' => $pages->pagination()?->toArray()
-            ];
+        if(!array_key_exists($role, $rolesList)) {
+            return $kirby->core()->area('site')['searches'][$type]['query']($query, $limit, $page);
         }
+
+        $fieldname = $rolesList[$role]['fieldname'] ?? null;
+
+        if(!is_string($fieldname) || $fieldname === '') {
+            return ['results' => [], 'pagination' => null];
+        }
+
+        $allowed      = static::getAllowedPages($user, $fieldname, $type === 'files');
+        $allowedPaths = array_fill_keys(array_column($allowed, 'path'), true);
+        $items        = $kirby->site()->index(true);
+
+        if($type == 'files') {
+            $items = $items->filter('isListable', true)->files();
+            $items = $items->add($kirby->site()->files());
+        }
+
+        $items = $items->filter(function ($item) use ($allowedPaths) {
+            return isset($allowedPaths[$item->panel()->url(true)]);
+        });
+
+        if($type === 'files') {
+            $items = $items->filter('isListable', true)->search($query);
+        } 
         else {
-            return $kirby->core()->area('site')['searches']['pages']['query']($query, $limit, $page);
+            $items = $items->search($query)->filter('isListable', true);
         }
+
+        if($limit !== null) {
+            $items = $items->paginate($limit, $page);
+        }
+
+        return [
+            'results' => $items->values(function($item) use($type) {
+                if($type === 'files' && class_exists(\Kirby\Panel\Ui\Item\FileItem::class)) {
+                    return (new \Kirby\Panel\Ui\Item\FileItem(file: $item, info: '{{ file.id }}'))->props();
+                }
+
+                return [
+                    'image' => $item->panel()->image(),
+                    'text'  => Escape::html($type === 'files' ? $item->filename() : $item->title()->value()),
+                    'link'  => $item->panel()->url(true),
+                    'info'  => Escape::html($item->id()),
+                    'uuid'  => $item->uuid()?->toString(),
+                ];
+            }),
+            'pagination' => $items->pagination()?->toArray()
+        ];
     }
 
     public static function panelChanges() {
