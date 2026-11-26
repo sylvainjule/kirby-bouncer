@@ -19,6 +19,8 @@ Restrict access of a user role to a specific page (and its children) in the pane
 
 ## 1. Installation
 
+> Kirby 5: up to 1.2.1, Kirby 6: 2+.
+
 Download and copy this repository to ```/site/plugins/bouncer```
 
 Alternatively, you can install it with composer: ```composer require sylvainjule/bouncer```
@@ -91,7 +93,7 @@ return [
 
 ### 2.2 Optional page switcher
 
-(beta)
+> Kirby 6 doesn't have sections anymore, but existing sections in your blueprints are converted automatically by the plugin. New blueprints should use a field instead.
 
 Since 1.0.1 a given user can access different pages. You can remove the `multiple: false` option from the blueprint:
 
@@ -107,13 +109,13 @@ fields:
     query: site.pages # or any query that suits your needs
 ```
 
-Add a `bouncernav` section in every page you'd like to display the page switcher on:
+Add a `bouncernav` field in every page you'd like to display the page switcher on:
 
 ```php
 // Anywhere in any blueprint
 
 (...)
-sections:
+fields:
   bouncernav:
     type: bouncernav
 ```

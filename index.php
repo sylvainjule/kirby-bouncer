@@ -1,118 +1,73 @@
 <?php
 
+use Kirby\Blueprint\Normalizer;
+use Kirby\Cms\App;
+use Kirby\Panel\Panel;
+use SylvainJule\Bouncer\BouncerNavField;
+use SylvainJule\Bouncer\ChangesController;
+use SylvainJule\Bouncer\FilesController;
+use SylvainJule\Bouncer\PagesController;
+
 require_once __DIR__ . '/lib/bouncer.php';
+require_once __DIR__ . '/lib/field.php';
+require_once __DIR__ . '/lib/controllers.php';
 
-if (!function_exists('str_starts_with')) {
-    function str_starts_with($haystack, $needle) {
-        return (string)$needle !== '' && strncmp($haystack, $needle, strlen($needle)) === 0;
-    }
-}
+Normalizer::$sectionFields['bouncernav'] = 'bouncernav';
 
-Kirby::plugin('sylvainjule/bouncer', [
-    'options'  => [
-        'list'       => []
+App::plugin('sylvainjule/bouncer', [
+    'options' => [
+        'list' => []
     ],
-    'sections' => [
-        'bouncernav' => []
+    'fields' => [
+        'bouncernav' => BouncerNavField::class
     ],
     'areas' => [
         'site' => function ($kirby) {
             return [
                 'searches' => [
-                    'pages' => [
-                        'query' => function (string|null $query, int $limit, int $page) use ($kirby) {
-                            return Bouncer::panelSearch($kirby, $query, $limit, $page);
-                        }
-                    ],
-                    'files' => [
-                        'query' => function (string|null $query, int $limit, int $page) use ($kirby) {
-                            return Bouncer::panelSearch($kirby, $query, $limit, $page, 'files');
-                        }
-                    ]
+                    'pages' => ['action' => PagesController::class],
+                    'files' => ['action' => FilesController::class]
                 ],
                 'dialogs' => [
-                    'changes' => [
-                        'load'    => function() {
-                            return Bouncer::panelChanges();
-                        },
-                    ],
+                    'changes' => ['action' => ChangesController::class]
                 ]
             ];
-        },
-    ],
-    'hooks'    => [
-        'panel.route:before' => function($route, $path, $method) {
-            $user  = kirby()->user();
-            if(!$user || !$path) return;
-
-            if (str_starts_with($path, "dialogs")
-                || str_starts_with($path, "dropdowns")
-                || str_starts_with($path, "search")) {
-                return;
-            }
-
-            $currentRole = $user->role()->name();
-
-            foreach(option('sylvainjule.bouncer.list') as $role => $options) {
-                if($currentRole == $role) {
-                    $fieldname    = $options['fieldname'];
-                    $allowed      = Bouncer::getAllowedPages($user, $fieldname, true);
-                    $allowedPaths = A::pluck($allowed, 'path');
-                    $currentPath  = '/'. $path;
-
-                    if(!in_array($currentPath, $allowedPaths)) {
-                        $systemPaths = ['/site/tree'];
-                        $systemMatch = array_filter($systemPaths, function($systemPath) use($currentPath) {
-                            return str_starts_with($currentPath, $systemPath);
-                        });
-
-                        if(!count($systemMatch)) {
-                            $fallback = option('sylvainjule.bouncer.list.'. $role .'.fallback', $allowedPaths[0]);
-                            Panel::go($fallback);
-                        }
-                    }
-                }
-            }
         }
     ],
-    'api'      => [
+    'hooks' => [
+        'panel.route:before' => function ($route, $path, $method) {
+            $kirby = kirby();
+            $user  = $kirby->user();
+            if(!$user || !$path) {
+                return $route;
+            }
+
+            $attributes = $route->attributes();
+            if(($attributes['type'] ?? 'view') !== 'view' || ($attributes['auth'] ?? true) === false) {
+                return $route;
+            }
+
+            $fallback = Bouncer::redirectPath($user, $path);
+            if($fallback !== null) {
+                Panel::go($fallback);
+            }
+            
+            return $route;
+        }
+    ],
+    'api' => [
         'routes' => function ($kirby) {
             return [
                 [
                     'pattern' => 'current-user',
-                    'action'  => function() use ($kirby) {
-                        $currentUser = $kirby->user();
-                        $currentRole = $currentUser->role()->name();
-                        $allowed     = [];
-                        $nav         = false;
-
-                        foreach(option('sylvainjule.bouncer.list') as $role => $options) {
-                            if($currentRole == $role) {
-                                $fieldname = $options['fieldname'];
-
-                                $allowed   = Bouncer::getAllowedPages($currentUser, $fieldname);
-                                $nav       = array_key_exists('nav', $options) && $options['nav'] ? $options['nav'] : false;
-                            }
-                        }
-
-                        return array(
-                            'nav'     => $nav,
-                            'allowed' => $allowed,
-                        );
-                    }
+                    'action' => fn() => Bouncer::currentUser($kirby->user())
                 ]
             ];
         }
     ],
     'translations' => [
-        'en' => [
-            'sylvainjule.bouncer.switch' => 'Switch to',
-        ],
-        'de' => [
-            'sylvainjule.bouncer.switch' => 'Wechseln zu',
-        ],
-        'fr' => [
-            'sylvainjule.bouncer.switch' => 'Basculer vers',
-        ],
+        'en' => ['sylvainjule.bouncer.switch' => 'Switch to'],
+        'de' => ['sylvainjule.bouncer.switch' => 'Wechseln zu'],
+        'fr' => ['sylvainjule.bouncer.switch' => 'Basculer vers']
     ]
 ]);

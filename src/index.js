@@ -1,7 +1,7 @@
-import BouncerNav from './components/BouncerNav.vue'
+import BouncerNav from './components/BouncerNav.vue';
 
 panel.plugin('sylvainjule/bouncer', {
-    sections: {
+    fields: {
         bouncernav: BouncerNav
-    },
+    }
 });

@@ -1,6 +1,6 @@
 {
   "name": "kirby-bouncer",
-  "version": "0.0.1",
+  "version": "2.0.0",
   "description": "Bouncer plugin for Kirby",
   "main": "index.js",
   "author": "Sylvain Julé",
@@ -24,7 +24,7 @@
     "eslint": "^9.27.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-vue": "^9.33.0",
-    "kirbyup": "^3.3.0",
+    "kirbyup": "^4.0.0",
     "prettier": "^3.5.3"
   }
 }

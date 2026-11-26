@@ -1,64 +1,129 @@
 <?php
 
+use Kirby\Cms\Page;
+use Kirby\Cms\Pages;
+use SylvainJule\Bouncer\ChangesController;
+use SylvainJule\Bouncer\FilesController;
+use SylvainJule\Bouncer\PagesController;
+
 class Bouncer {
+    public static function roleOptions($user): ?array {
+        if(!$user) { return null; }
+
+        $list = kirby()->option('sylvainjule.bouncer.list', []);
+        if(!is_array($list)) { return null; }
+
+        $role = $user->role()->name();
+        return array_key_exists($role, $list) ? (array)$list[$role] : null;
+    }
 
     public static function getAllowedPages($user, $fieldname, $extra = false) {
-        $kirby   = kirby();
         $allowed = [];
-        $pages   = $user->$fieldname()->yaml();
-        $pages   = array_map(function($p) use($kirby) { return $kirby->page($p); }, $pages);
-        $pages   = new Pages($pages);
+        $pages = new Pages();
 
-        if($pages->count()) {
-            foreach($pages as $page) {
-                $allowed[] = [
-                    'title' => $page->title()->value(),
-                    'path'  => $page->panel()->url(true)
-                ];
+        if($user && is_string($fieldname) && $fieldname !== '') {
+            $field = $user->content()->get($fieldname);
 
-                $children = $extra ? static::getChildren($page) : [];
-                $allowed  = array_merge($allowed, $children);
+            try {
+                $ids = $field->yaml();
+            } 
+            catch (\Exception $e) {
+                $ids = [];
+            }
+            foreach($ids as $id) {
+                if(is_string($id) && $id !== '' && ($page = kirby()->page($id)) instanceof Page) {
+                    $pages->add($page);
+                }
+            }
+        }
+
+        foreach($pages as $page) {
+            $allowed[] = [
+                'title' => $page->title()->value(),
+                'path'  => $page->panel()->url(true)
+            ];
+            if($extra) {
+                $allowed = array_merge($allowed, static::getChildren($page));
             }
         }
 
         if($extra) {
-            $allowed[] = [
-                'title' => 'Account',
-                'path'  => '/account'
-            ];
-            $allowed[] = [
-                'title' => 'Login',
-                'path'  => '/login'
-            ];
-            $allowed[] = [
-                'title' => 'Logout',
-                'path'  => '/logout'
-            ];
-            $allowed[] = [
-                'title' => 'Reset password',
-                'path'  => '/reset-password'
-            ];
-
-            $allowed = array_merge($allowed, $kirby->option('sylvainjule.bouncer.list.'. $user->role() .'.extra', []));
+            $allowed = array_merge($allowed, [
+                ['title' => 'Account', 'path' => '/account'],
+                ['title' => 'Login', 'path' => '/login'],
+                ['title' => 'Logout', 'path' => '/logout'],
+                ['title' => 'Reset password', 'path' => '/reset-password']
+            ], static::roleOptions($user)['extra'] ?? []);
         }
-
         return $allowed;
     }
-    
+
+    public static function currentUser($user): array {
+        $options = static::roleOptions($user);
+        return [
+            'nav'     => ($options['nav'] ?? false) ?: false,
+            'allowed' => $options === null ? [] : static::getAllowedPages($user, $options['fieldname'] ?? null)
+        ];
+    }
+
+    public static function allowedPaths($user, bool $extra = false): array {
+        $options = static::roleOptions($user);
+        if($options === null) { return []; }
+
+        return array_column(static::getAllowedPages($user, $options['fieldname'] ?? null, $extra), 'path');
+    }
+
+    public static function isAllowedView(string $path, array $paths): bool {
+        if(in_array($path, $paths, true)) {
+            return true;
+        }
+        // ↓ live preview
+        if(preg_match('~^((?:/pages/[^/]+|/site))/preview/(?:changes|latest|compare|form(?:/remote)?)$~D', $path, $match)) {
+            return in_array($match[1], $paths, true);
+        }
+        return $path === '/site/tree' || str_starts_with($path, '/site/tree/');
+    }
+
+    public static function redirectPath($user, string $path): ?string {
+        $options = static::roleOptions($user);
+
+        if($options === null) {
+            return null;
+        }
+
+        $path  = '/' . trim($path, '/');
+        $paths = static::allowedPaths($user, true);
+        if(static::isAllowedView($path, $paths)) {
+            return null;
+        }
+
+        $fallback = $options['fallback'] ?? null;
+        if(is_string($fallback) && $fallback !== '') {
+            $fallback = '/' . ltrim($fallback, '/');
+            $target   = parse_url($fallback, PHP_URL_PATH);
+
+            if(is_string($target) && static::isAllowedView($target, $paths)) {
+                return $fallback;
+            }
+        }
+
+        return $paths[0] ?? '/account';
+    }
+
     public static function isMovableTo($page, $parent) {
         try {
-            $movable   = true;
-            $user      = kirby()->user();
-            $role      = $user->role()->name();
-            $rolesList = option('sylvainjule.bouncer.list');
+            $user = kirby()->user();
+            if(!$user) { return false; }
 
-            if(array_key_exists($role, $rolesList) && array_key_exists('fieldname', $rolesList[$role])) {
-                $allowed = static::getAllowedPages($user, $rolesList[$role]['fieldname']);
-                $movable = in_array($parent->panel()->url(true), array_column($allowed, 'path'));
+            $options = static::roleOptions($user);
+            if($options !== null && array_key_exists('fieldname', $options) &&
+                !in_array($parent->panel()->url(true), static::allowedPaths($user), true)) {
+                return false;
             }
 
-            Kirby\Cms\PageRules::move($page, $parent);
-            return $movable;
+            $page->guards()->ensureExecutable('move', $parent);
+
+            return true;
         } 
         catch (Throwable) {
             return false;
@@ -66,131 +131,40 @@ class Bouncer {
     }
 
     public static function panelSearch($kirby, $query, $limit, $page, $type = 'pages') {
-        $user = $kirby->user();
-
-        if(!$user) {
+        if(!$kirby->user()) {
             return ['results' => [], 'pagination' => null];
         }
 
-        $role      = $user->role()->name();
-        $rolesList = $kirby->option('sylvainjule.bouncer.list', []);
-
-        if(!array_key_exists($role, $rolesList)) {
-            return $kirby->core()->area('site')['searches'][$type]['query']($query, $limit, $page);
-        }
-
-        $fieldname = $rolesList[$role]['fieldname'] ?? null;
-
-        if(!is_string($fieldname) || $fieldname === '') {
-            return ['results' => [], 'pagination' => null];
-        }
-
-        $allowed      = static::getAllowedPages($user, $fieldname, $type === 'files');
-        $allowedPaths = array_fill_keys(array_column($allowed, 'path'), true);
-        $items        = $kirby->site()->index(true);
-
-        if($type == 'files') {
-            $items = $items->filter('isListable', true)->files();
-            $items = $items->add($kirby->site()->files());
-        }
-
-        $items = $items->filter(function ($item) use ($allowedPaths) {
-            return isset($allowedPaths[$item->panel()->url(true)]);
-        });
-
-        if($type === 'files') {
-            $items = $items->filter('isListable', true)->search($query);
-        } 
-        else {
-            $items = $items->search($query)->filter('isListable', true);
-        }
-
-        if($limit !== null) {
-            $items = $items->paginate($limit, $page);
-        }
-
-        return [
-            'results' => $items->values(function($item) use($type) {
-                if($type === 'files' && class_exists(\Kirby\Panel\Ui\Item\FileItem::class)) {
-                    return (new \Kirby\Panel\Ui\Item\FileItem(file: $item, info: '{{ file.id }}'))->props();
-                }
-
-                return [
-                    'image' => $item->panel()->image(),
-                    'text'  => Escape::html($type === 'files' ? $item->filename() : $item->title()->value()),
-                    'link'  => $item->panel()->url(true),
-                    'info'  => Escape::html($item->id()),
-                    'uuid'  => $item->uuid()?->toString(),
-                ];
-            }),
-            'pagination' => $items->pagination()?->toArray()
-        ];
+        $class = $type === 'files' ? FilesController::class : PagesController::class;
+        return (new $class(query: $query ?? '', limit: $limit, page: $page))->load();
     }
 
     public static function panelChanges() {
-        $user      = kirby()->user();
-        $role      = $user->role()->name();
-        $rolesList = option('sylvainjule.bouncer.list');
-        $changes   = (new Kirby\Panel\ChangesDialog())->load();
-
-        if(array_key_exists($role, $rolesList) && array_key_exists('fieldname', $rolesList[$role])) {
-            $allowed = static::getAllowedPages(kirby()->user(), $rolesList[$role]['fieldname']);
-
-            $pages = $changes['props']['pages'];
-            $pages = array_filter($pages, function($p) use($allowed) {
-                return in_array($p['link'], array_column($allowed, 'path'));
-            });
-            $changes['props']['pages'] = array_values($pages);
-
-            $files = $changes['props']['files'];
-            $files = array_filter($files, function($f) use($allowed) {
-                return in_array(explode('/files/', $f['link'])[0], array_column($allowed, 'path'));
-            });
-            $changes['props']['files'] = array_values($files);
-
-            $changes['props']['users'] = [];
-        }
-        
-        return $changes;
+        return (new ChangesController())->load()->render();
     }
 
-    private static function getChildrenFiles(Kirby\Cms\Page $page) {
-        if (!($page->hasFiles())) { return []; }
-        
+    private static function getChildrenFiles(Page $page) {
         $allowed = [];
-        $files   = $page->files();
-        foreach($files as $f) {
+        foreach($page->files() as $file) {
             $allowed[] = [
-                'title' => $f->title()->value(),
-                'path'  => $f->panel()->url(true)
+                'title' => $file->title()->value(),
+                'path' => $file->panel()->url(true)
             ];
         }
-
         return $allowed;
     }
 
-    private static function getChildren(Kirby\Cms\Page $page) {
-        if (!($page->hasChildren() || $page->hasDrafts() || $page->hasFiles())) { return []; }
+    private static function getChildren(Page $page) {
+        $allowed = static::getChildrenFiles($page);
 
-        $allowed = [];
-        $pages   = $page->childrenAndDrafts();
-        
-        if($page->hasFiles()){
-            $files = static::getChildrenFiles($page);
-            $allowed  = array_merge($allowed, $files);
-        }
-
-        foreach($pages as $p) {
+        foreach($page->childrenAndDrafts() as $child) {
             $allowed[] = [
-                'title' => $p->title()->value(),
-                'path'  => $p->panel()->url(true)
+                'title' => $child->title()->value(),
+                'path' => $child->panel()->url(true)
             ];
-
-            $children = static::getChildren($p);
-            $allowed  = array_merge($allowed, $children);
+            $allowed = array_merge($allowed, static::getChildren($child));
         }
-
+        
         return $allowed;
     }
-
 }

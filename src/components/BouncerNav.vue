@@ -1,57 +1,67 @@
 <template>
-    <div v-if="show" class="bouncer-nav">
-        <div class="bouncer-nav-container">
-            <div class="bouncer-nav-inner">
-                <strong>{{ $t('sylvainjule.bouncer.switch') }}:</strong>
-                <div v-for="page in pages" class="page">
-                    <k-link :to="page.path">{{ page.title }}</k-link>
-                </div>
-            </div>
-        </div>
+    <div ref="anchor" class="bouncer-nav-anchor" :class="{ 'bouncer-nav-inline': show && !host }">
+        <Teleport v-if="show && host" :to="host">
+            <BouncerLinks :pages="pages" />
+        </Teleport>
+        <BouncerLinks v-else-if="show" :pages="pages" />
     </div>
 </template>
 
 <script>
-export default {
-    data() {
-        return {
-            user: undefined
-        }
-    },
-    created() {
-        this.$api.get('current-user').then(user => {
-            this.user = user;
-            if(this.showBar(user)) {
-                this.$nextTick(() => {
-                    let _panel   = this.$root.$el
-                    let _main    = _panel.querySelector('.k-panel-main')
-                    let _bar     = _panel.querySelector('.k-sections .bouncer-nav-container')
-                    let _prevBar = document.querySelector('.k-panel > .bouncer-nav-container')
+import BouncerLinks from './BouncerLinks.vue';
+import { visiblePages, showBar, mountHost } from '../navigation.js';
 
-                    _panel.classList.add('bouncer-padding-top')
-                    _prevBar && _prevBar.remove()
-                    _panel.insertBefore(_bar, _main)
-                })
-            }
-        });
+export default {
+    components: { BouncerLinks },
+    props: {
+        bouncerUser:   { type: Object, default: () => ({}) },
+        bouncerParent: { type: String, default: '' }
+    },
+    data() {
+        return { host: null }
     },
     computed: {
         show() {
-            return this.showBar(this.user)
+            return showBar(this.bouncerUser)
         },
         pages() {
-            if(!this.show) return []
-            return this.user.allowed.filter(el => { return el.path != this.parent})
+            return visiblePages(this.bouncerUser, this.bouncerParent)
         }
     },
+    watch: {
+        show() {
+            this.syncHost()
+        }
+    },
+    mounted() {
+        this.syncHost()
+    },
+    activated() {
+        this.syncHost()
+    },
+    deactivated() {
+        this.releaseHost()
+    },
+    beforeUnmount() {
+        this.releaseHost()
+    },
     methods: {
-        showBar(user) {
-            return user && user.nav && Array.isArray(user.allowed) && user.allowed.length > 1
+        syncHost() {
+            if(!this.show) {
+                this.releaseHost()
+            } 
+            else if(!this.host?.isConnected) {
+                this.host = mountHost(this.$refs.anchor)
+            }
+        },
+        releaseHost() {
+            this.host?.remove()
+            this.host = null
         }
     }
 };
 </script>
 
 <style lang="scss">
-  @import '../assets/css/styles.scss';
+    @import '../assets/css/styles.scss';
 </style>
