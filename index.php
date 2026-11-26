@@ -32,6 +32,19 @@ App::plugin('sylvainjule/bouncer', [
                     'changes' => ['action' => ChangesController::class]
                 ]
             ];
+        },
+        'users' => function ($kirby) {
+            $user = $kirby->user();
+
+            if($user && Bouncer::roleOptions($user) !== null) {
+                return [
+                    'searches' => [
+                        'users' => false
+                    ]
+                ];
+            }
+
+            return [];
         }
     ],
     'hooks' => [
@@ -51,7 +64,7 @@ App::plugin('sylvainjule/bouncer', [
             if($fallback !== null) {
                 Panel::go($fallback);
             }
-            
+
             return $route;
         }
     ],
