@@ -7,6 +7,10 @@
     padding-top: 0;
 }
 
+.k-panel:has(.bouncer-nav-host) .k-page-view-header {
+    top: 40px;
+}
+
 .bouncer-nav-host {
     position: sticky;
     top: 0;
